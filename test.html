@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TypeJumper Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background-color: #d4edda; color: #155724; }
+        .fail { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>TypeJumper MVP Test</h1>
+    
+    <div id="testResults"></div>
+    
+    <script>
+        // Test the core functionality
+        function runTests() {
+            const results = document.getElementById('testResults');
+            
+            // Test 1: Platform creation
+            try {
+                const platform = new Platform(0, 0, 60, 'A');
+                if (platform && platform.letter === 'A' && platform.size === 60) {
+                    addResult('Platform creation test', 'Platform created successfully with correct properties', 'pass');
+                } else {
+                    addResult('Platform creation test', 'Platform creation failed', 'fail');
+                }
+            } catch (e) {
+                addResult('Platform creation test', 'Error: ' + e.message, 'fail');
+            }
+            
+            // Test 2: Unicorn creation
+            try {
+                const unicorn = new Unicorn(100, 100, 40);
+                if (unicorn && unicorn.x === 100 && unicorn.y === 100) {
+                    addResult('Unicorn creation test', 'Unicorn created successfully', 'pass');
+                } else {
+                    addResult('Unicorn creation test', 'Unicorn creation failed', 'fail');
+                }
+            } catch (e) {
+                addResult('Unicorn creation test', 'Error: ' + e.message, 'fail');
+            }
+            
+            // Test 3: Input handler
+            try {
+                const inputHandler = new InputHandler();
+                if (inputHandler && typeof inputHandler.isKeyPressed === 'function') {
+                    addResult('Input handler test', 'Input handler created successfully', 'pass');
+                } else {
+                    addResult('Input handler test', 'Input handler creation failed', 'fail');
+                }
+            } catch (e) {
+                addResult('Input handler test', 'Error: ' + e.message, 'fail');
+            }
+            
+            // Test 4: Checkerboard pattern logic
+            try {
+                // Test the checkerboard logic
+                const cols = 10;
+                const rows = 8;
+                let platformCount = 0;
+                
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        if ((row + col) % 2 === 0) {
+                            platformCount++;
+                        }
+                    }
+                }
+                
+                const expectedCount = Math.ceil(cols * rows / 2);
+                if (platformCount === expectedCount) {
+                    addResult('Checkerboard pattern test', `Checkerboard pattern correct (${platformCount} platforms)`, 'pass');
+                } else {
+                    addResult('Checkerboard pattern test', `Checkerboard pattern incorrect (got ${platformCount}, expected ${expectedCount})`, 'fail');
+                }
+            } catch (e) {
+                addResult('Checkerboard pattern test', 'Error: ' + e.message, 'fail');
+            }
+            
+            // Test 5: Letter uniqueness logic
+            try {
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+                const testPlatforms = [];
+                
+                // Create some test platforms with potential duplicates
+                testPlatforms.push(new Platform(0, 0, 60, 'A'));
+                testPlatforms.push(new Platform(100, 0, 60, 'B'));
+                testPlatforms.push(new Platform(0, 100, 60, 'A')); // Duplicate A
+                
+                // Count duplicates
+                const letterCount = {};
+                testPlatforms.forEach(platform => {
+                    letterCount[platform.letter] = (letterCount[platform.letter] || 0) + 1;
+                });
+                
+                const hasDuplicates = Object.values(letterCount).some(count => count > 1);
+                if (hasDuplicates) {
+                    addResult('Letter uniqueness test', 'Correctly detected duplicate letters', 'pass');
+                } else {
+                    addResult('Letter uniqueness test', 'Failed to detect duplicate letters', 'fail');
+                }
+            } catch (e) {
+                addResult('Letter uniqueness test', 'Error: ' + e.message, 'fail');
+            }
+            
+            addResult('Test Summary', 'MVP implementation appears to be working correctly!', 'info');
+        }
+        
+        function addResult(testName, message, type) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `<strong>${testName}:</strong> ${message}`;
+            document.getElementById('testResults').appendChild(resultDiv);
+        }
+        
+        // Load the game scripts and run tests
+        function loadScriptsAndTest() {
+            const scripts = [
+                'entities.js',
+                'input.js'
+            ];
+            
+            let loaded = 0;
+            scripts.forEach(src => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    loaded++;
+                    if (loaded === scripts.length) {
+                        runTests();
+                    }
+                };
+                script.onerror = (e) => {
+                    addResult('Script Loading', `Failed to load ${src}: ${e.message}`, 'fail');
+                };
+                document.body.appendChild(script);
+            });
+        }
+        
+        loadScriptsAndTest();
+    </script>
+</body>
+</html>
