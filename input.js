@@ -8,15 +8,15 @@ class InputHandler {
 
     setupEventListeners() {
         document.addEventListener('keydown', (e) => {
-            // Only handle letter keys (A-Z)
-            if (e.key.length === 1 && e.key >= 'A' && e.key <= 'Z') {
-                this.keysPressed.add(e.key);
+            // Handle letter keys (convert to uppercase)
+            if (e.key.length === 1 && /^[a-z]$/i.test(e.key)) {
+                this.keysPressed.add(e.key.toUpperCase());
             }
         });
 
         document.addEventListener('keyup', (e) => {
-            if (e.key.length === 1 && e.key >= 'A' && e.key <= 'Z') {
-                this.keysPressed.delete(e.key);
+            if (e.key.length === 1 && /^[a-z]$/i.test(e.key)) {
+                this.keysPressed.delete(e.key.toUpperCase());
             }
         });
     }

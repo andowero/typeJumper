@@ -16,8 +16,8 @@ class Game {
         // Game entities
         this.platforms = [];
         this.unicorn = null;
-        this.platformSize = 60;
-        this.platformSpacing = 20;
+        this.platformSize = 90; // 50% bigger (60 * 1.5)
+        this.platformSpacing = 24; // 20% farther apart (20 * 1.2)
         
         // Initialize game
         this.init();
@@ -107,6 +107,61 @@ class Game {
         }
     }
 
+    findNeighborPlatforms(currentPlatform) {
+        const neighbors = [];
+        const neighborOffsets = [
+            {dx: -1, dy: -1}, // upper left
+            {dx: 1, dy: -1},  // upper right
+            {dx: -1, dy: 0},  // left
+            {dx: 1, dy: 0},   // right
+            {dx: -1, dy: 1},  // lower left
+            {dx: 1, dy: 1}    // lower right
+        ];
+        
+        const platformGrid = this.createPlatformGrid();
+        
+        // Find current platform position in grid
+        for (let row = 0; row < platformGrid.length; row++) {
+            for (let col = 0; col < platformGrid[row].length; col++) {
+                if (platformGrid[row][col] === currentPlatform) {
+                    // Check all neighbor positions
+                    neighborOffsets.forEach(offset => {
+                        const neighborRow = row + offset.dy;
+                        const neighborCol = col + offset.dx;
+                        
+                        if (neighborRow >= 0 && neighborRow < platformGrid.length &&
+                            neighborCol >= 0 && neighborCol < platformGrid[neighborRow].length) {
+                            const neighbor = platformGrid[neighborRow][neighborCol];
+                            if (neighbor) {
+                                neighbors.push(neighbor);
+                            }
+                        }
+                    });
+                    return neighbors;
+                }
+            }
+        }
+        
+        return neighbors;
+    }
+
+    createPlatformGrid() {
+        const cols = Math.floor(this.canvas.width / (this.platformSize + this.platformSpacing));
+        const rows = Math.floor(this.canvas.height / (this.platformSize + this.platformSpacing));
+        
+        const grid = Array(rows).fill().map(() => Array(cols).fill(null));
+        
+        this.platforms.forEach(platform => {
+            const col = Math.round(platform.x / (this.platformSize + this.platformSpacing));
+            const row = Math.round(platform.y / (this.platformSize + this.platformSpacing));
+            if (row >= 0 && row < rows && col >= 0 && col < cols) {
+                grid[row][col] = platform;
+            }
+        });
+        
+        return grid;
+    }
+
     createUnicorn() {
         // Find all platforms on the lowest level (highest y value)
         const lowestPlatforms = [];
@@ -127,9 +182,9 @@ class Game {
             const startPlatform = lowestPlatforms[Math.floor(Math.random() * lowestPlatforms.length)];
             
             // Create unicorn centered on the platform
-            const unicornSize = this.platformSize * 0.8;
+            const unicornSize = this.platformSize * 0.6; // Smaller relative size
             const unicornX = startPlatform.x + (startPlatform.size - unicornSize) / 2;
-            const unicornY = startPlatform.y - (startPlatform.size - unicornSize);
+            const unicornY = startPlatform.y - unicornSize; // Place unicorn ON top of the platform
             
             this.unicorn = new Unicorn(unicornX, unicornY, unicornSize);
             startPlatform.isOccupied = true;
@@ -148,33 +203,59 @@ class Game {
         if (pressedKeys.length > 0 && this.unicorn && !this.unicorn.isJumping) {
             const targetKey = pressedKeys[0]; // Use the first pressed key
             
-            // Find platform with matching letter
-            const targetPlatform = this.platforms.find(platform => 
-                platform.letter === targetKey && !platform.isOccupied
-            );
+            // Find current platform (where unicorn is located)
+            const currentPlatform = this.platforms.find(platform => platform.isOccupied);
             
-            if (targetPlatform) {
-                // Clear the pressed key to prevent multiple jumps
-                this.inputHandler.clearPressedKeys();
+            if (currentPlatform) {
+                // Find neighbor platforms
+                const neighborPlatforms = this.findNeighborPlatforms(currentPlatform);
                 
-                // Make the unicorn jump to the target platform
-                this.unicorn.jumpToPlatform(targetPlatform);
+                // Find target platform among neighbors only
+                const targetPlatform = neighborPlatforms.find(platform => 
+                    platform.letter === targetKey && !platform.isOccupied
+                );
                 
-                // Update platform occupancy
-                this.platforms.forEach(platform => {
-                    platform.isOccupied = false;
-                });
-                targetPlatform.isOccupied = true;
-                
-                // Increase score
-                this.score += 10;
-                this.updateUI();
+                if (targetPlatform) {
+                    // Clear the pressed key to prevent multiple jumps
+                    this.inputHandler.clearPressedKeys();
+                    
+                    // Make the unicorn jump to the target platform
+                    this.unicorn.jumpToPlatform(targetPlatform);
+                    
+                    // Update platform occupancy
+                    this.platforms.forEach(platform => {
+                        platform.isOccupied = false;
+                    });
+                    targetPlatform.isOccupied = true;
+                    
+                    // Increase score
+                    this.score += 10;
+                    this.updateUI();
+                }
             }
         }
     }
 
     update() {
         if (this.paused || this.gameOver) return;
+        
+        // Reset jumpable status for all platforms
+        this.platforms.forEach(platform => {
+            platform.isJumpable = false;
+        });
+        
+        // Mark neighbor platforms as jumpable
+        if (this.unicorn && !this.unicorn.isJumping) {
+            const currentPlatform = this.platforms.find(platform => platform.isOccupied);
+            if (currentPlatform) {
+                const neighbors = this.findNeighborPlatforms(currentPlatform);
+                neighbors.forEach(neighbor => {
+                    if (!neighbor.isOccupied) {
+                        neighbor.isJumpable = true;
+                    }
+                });
+            }
+        }
         
         // Update unicorn position
         if (this.unicorn) {

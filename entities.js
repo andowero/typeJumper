@@ -8,6 +8,7 @@ class Platform {
         this.letter = letter;
         this.color = this.getRandomColor();
         this.isOccupied = false;
+        this.isJumpable = false; // For neighbor highlighting
     }
 
     getRandomColor() {
@@ -20,21 +21,36 @@ class Platform {
     }
 
     draw(ctx) {
-        // Draw platform
-        ctx.fillStyle = this.color;
+        // Draw platform with darker color if jumpable
+        ctx.fillStyle = this.isJumpable ? this.getDarkerColor() : this.color;
         ctx.fillRect(this.x, this.y, this.size, this.size);
         
-        // Draw border
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
+        // Draw border (thicker for jumpable platforms)
+        ctx.strokeStyle = this.isJumpable ? '#FFD700' : '#000';
+        ctx.lineWidth = this.isJumpable ? 3 : 2;
         ctx.strokeRect(this.x, this.y, this.size, this.size);
         
-        // Draw letter
-        ctx.fillStyle = '#000';
+        // Draw letter (white for jumpable platforms for better contrast)
+        ctx.fillStyle = this.isJumpable ? '#FFF' : '#000';
         ctx.font = `${this.size * 0.7}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(this.letter, this.x + this.size/2, this.y + this.size/2);
+    }
+
+    getDarkerColor() {
+        // Convert hex color to RGB, darken it, then back to hex
+        const hex = this.color.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        
+        // Darken by 30% and add some blue tint for jumpable platforms
+        const darkerR = Math.max(0, Math.floor(r * 0.7));
+        const darkerG = Math.max(0, Math.floor(g * 0.7));
+        const darkerB = Math.max(0, Math.floor(b * 0.8 + 50)); // Add blue tint
+        
+        return `#${darkerR.toString(16).padStart(2, '0')}${darkerG.toString(16).padStart(2, '0')}${darkerB.toString(16).padStart(2, '0')}`;
     }
 
     containsPoint(x, y) {
@@ -92,12 +108,12 @@ class Unicorn {
                 : -1 + (4 - 2 * progress) * progress;
             
             this.x = this.targetPlatform.x + (this.targetPlatform.size - this.size) / 2;
-            this.y = this.targetPlatform.y - (this.targetPlatform.size - this.size) * easeProgress;
+            this.y = this.targetPlatform.y - this.size * easeProgress;
             
             if (this.jumpProgress >= this.jumpDuration) {
                 this.isJumping = false;
                 this.jumpProgress = 0;
-                this.y = this.targetPlatform.y;
+                this.y = this.targetPlatform.y - this.size;
             }
         }
     }
