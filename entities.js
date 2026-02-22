@@ -109,26 +109,33 @@ class Unicorn {
             this.jumpProgress++;
             const progress = this.jumpProgress / this.jumpDuration;
             
-            // Calculate arc-based jumping animation
-            // X position: move linearly to target
-            this.x = this.targetPlatform.x + (this.targetPlatform.size - this.size) / 2;
+            // Calculate proper jump animation with smooth arc
+            // X position: move smoothly from start to target
+            const startX = this.jumpStartX || this.x;
+            const targetX = this.targetPlatform.x + (this.targetPlatform.size - this.size) / 2;
+            this.x = startX + (targetX - startX) * progress;
             
-            // Y position: create a parabolic arc
-            // Start at jumpStartY, peak at jumpStartY - jumpHeight, end at target Y
+            // Y position: create beautiful parabolic arc using sine wave for smoothness
+            // Start at jumpStartY, peak in middle, end at target Y
+            const jumpPeak = this.jumpStartY - this.jumpHeight;
             if (progress < 0.5) {
-                // First half: going up
+                // First half: accelerating upward (ease-out)
                 const upwardProgress = progress * 2;
-                this.y = this.jumpStartY - (this.jumpHeight * upwardProgress);
+                const easeOut = 1 - Math.pow(1 - upwardProgress, 3); // cubic ease-out
+                this.y = this.jumpStartY - (this.jumpHeight * easeOut);
             } else {
-                // Second half: coming down
+                // Second half: decelerating downward (ease-in)
                 const downwardProgress = (progress - 0.5) * 2;
-                this.y = (this.jumpStartY - this.jumpHeight) + (this.jumpHeight * downwardProgress);
+                const easeIn = Math.pow(downwardProgress, 3); // cubic ease-in
+                this.y = jumpPeak + (this.jumpHeight * easeIn);
             }
             
             if (this.jumpProgress >= this.jumpDuration) {
                 this.isJumping = false;
                 this.jumpProgress = 0;
                 this.y = this.targetPlatform.y - this.size;
+                // Reset start position for next jump
+                this.jumpStartX = null;
             }
         }
     }
@@ -137,6 +144,7 @@ class Unicorn {
         this.isJumping = true;
         this.targetPlatform = platform;
         this.jumpProgress = 0;
+        this.jumpStartX = this.x; // Store starting X position
         this.jumpStartY = this.y; // Store starting Y position for arc calculation
         this.jumpPeakReached = false;
         this.jumpHeight = jumpHeight || 80; // Use provided height or default

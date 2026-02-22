@@ -278,10 +278,8 @@ class Game {
                     });
                     targetPlatform.isOccupied = true;
                     
-                    // Start platform sagging animation
-                    this.saggingPlatform = targetPlatform;
-                    this.sagStartTime = performance.now();
-                    this.sagDirection = 1; // Start by sagging down
+                    // Store target platform for sagging when jump completes
+                    this.targetPlatformForSag = targetPlatform;
                     
                     // Increase score
                     this.score += 10;
@@ -296,6 +294,15 @@ class Game {
         
         // Update platform sagging animation
         this.updatePlatformSagging();
+        
+        // Check if jump just completed to trigger sagging
+        if (this.unicorn && !this.unicorn.isJumping && this.targetPlatformForSag && !this.saggingPlatform) {
+            // Jump just completed - start sagging animation
+            this.saggingPlatform = this.targetPlatformForSag;
+            this.sagStartTime = performance.now();
+            this.sagDirection = 1; // Start by sagging down
+            this.targetPlatformForSag = null; // Clear the reference
+        }
         
         // Reset jumpable status for all platforms
         this.platforms.forEach(platform => {
