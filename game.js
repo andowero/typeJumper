@@ -13,11 +13,23 @@ class Game {
         this.gameOver = false;
         this.paused = false;
         
+        // Animation parameters
+        this.jumpDuration = 200; // ms - tunable jump animation duration
+        this.jumpHeight = 80; // pixels - maximum jump height
+        this.platformSagAmount = 5; // pixels - how much platform sags on landing
+        this.platformSagDuration = 150; // ms - sag animation duration
+        
         // Game entities
         this.platforms = [];
         this.unicorn = null;
         this.platformSize = 90; // 50% bigger (60 * 1.5)
         this.platformSpacing = 24; // 20% farther apart (20 * 1.2)
+        
+        // Animation state
+        this.jumpStartTime = 0;
+        this.saggingPlatform = null;
+        this.sagStartTime = 0;
+        this.sagDirection = 1; // 1 for down, -1 for up
         
         // Initialize game
         this.init();
@@ -167,6 +179,36 @@ class Game {
         return grid;
     }
 
+    updatePlatformSagging() {
+        if (this.saggingPlatform) {
+            const elapsed = performance.now() - this.sagStartTime;
+            
+            if (elapsed < this.platformSagDuration) {
+                // Calculate sag progress (0 to 1)
+                const progress = elapsed / this.platformSagDuration;
+                
+                if (this.sagDirection === 1) {
+                    // Sagging down
+                    this.saggingPlatform.sagAmount = this.platformSagAmount * progress;
+                } else {
+                    // Returning up
+                    this.saggingPlatform.sagAmount = this.platformSagAmount * (1 - progress);
+                }
+            } else {
+                // Animation complete
+                if (this.sagDirection === 1) {
+                    // Start returning up
+                    this.sagStartTime = performance.now();
+                    this.sagDirection = -1;
+                } else {
+                    // Animation fully complete
+                    this.saggingPlatform.sagAmount = 0;
+                    this.saggingPlatform = null;
+                }
+            }
+        }
+    }
+
     createUnicorn() {
         // Find all platforms on the lowest level (highest y value)
         const lowestPlatforms = [];
@@ -225,13 +267,21 @@ class Game {
                     this.inputHandler.clearPressedKeys();
                     
                     // Make the unicorn jump to the target platform
-                    this.unicorn.jumpToPlatform(targetPlatform);
+                    this.unicorn.jumpToPlatform(targetPlatform, this.jumpDuration, this.jumpHeight);
+                    
+                    // Record jump start time for animation
+                    this.jumpStartTime = performance.now();
                     
                     // Update platform occupancy
                     this.platforms.forEach(platform => {
                         platform.isOccupied = false;
                     });
                     targetPlatform.isOccupied = true;
+                    
+                    // Start platform sagging animation
+                    this.saggingPlatform = targetPlatform;
+                    this.sagStartTime = performance.now();
+                    this.sagDirection = 1; // Start by sagging down
                     
                     // Increase score
                     this.score += 10;
@@ -243,6 +293,9 @@ class Game {
 
     update() {
         if (this.paused || this.gameOver) return;
+        
+        // Update platform sagging animation
+        this.updatePlatformSagging();
         
         // Reset jumpable status for all platforms
         this.platforms.forEach(platform => {

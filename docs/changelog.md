@@ -2,6 +2,53 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2024-02-22
+### Added
+- **Arc-Based Jumping Animation**: Beautiful parabolic jump trajectory with smooth upward/downward motion
+- **Platform Sagging Effect**: Landing platforms sag downward and bounce back for realistic physics feel
+- **Tunable Animation Parameters**: All animation durations and effects are configurable
+
+### Animation Features
+- **Jump Arc**: Unicorn follows perfect parabolic trajectory (starts on platform → peaks → lands on target)
+- **Jump Duration**: 200ms default, fully tunable via `jumpDuration` parameter
+- **Jump Height**: 80px default peak height, configurable via `jumpHeight` parameter
+- **Platform Sag**: 5px sag amount with 150ms bounce-back animation
+- **Smooth Transitions**: Frame-based animation with proper easing
+
+### Technical Implementation
+- **Parabolic Motion**: Mathematical arc calculation using quadratic easing
+- **Platform Physics**: Sagging animation with down/up bounce cycle
+- **Performance-Based Timing**: Uses `performance.now()` for accurate animation timing
+- **Configurable System**: All animation parameters exposed for easy tuning
+
+### Files Modified
+- `game.js`: Added animation parameters, sagging system, and timing controls
+- `entities.js`: Enhanced Unicorn with arc-based jumping, Platform with sagging support
+
+### Animation Parameters (Tunable)
+```javascript
+this.jumpDuration = 200;       // ms - total jump time
+this.jumpHeight = 80;         // px - maximum jump height
+this.platformSagAmount = 5;    // px - sag depth
+this.platformSagDuration = 150; // ms - sag animation duration
+```
+
+## [0.2.2] - 2024-02-22
+### Fixed
+- **Neighbor Distance**: Fixed unicorn jumping to platforms two levels away instead of nearest neighbors
+- **Correct Checkerboard Offsets**: Implemented proper offset calculation for checkerboard pattern
+
+### Technical Fix
+- **Precise Offset Calculation**: 
+  - Diagonals: ±1 in both directions (maintains even row+col sum)
+  - Horizontals: ±2 in x direction, 0 in y (maintains even row+col sum)
+- **Nearest Neighbor Detection**: Now correctly finds immediately adjacent platforms
+- **Visual Confirmation**: Jumpable platforms are highlighted and are the closest possible targets
+
+### Changed
+- `findNeighborPlatforms()`: Uses mixed offsets {dx: ±1/±2, dy: ±1/0} for correct checkerboard navigation
+- Neighbor test updated to reflect accurate neighbor distances
+
 ## [0.2.1] - 2024-02-22
 ### Fixed
 - **Neighbor Detection**: Fixed checkerboard pattern neighbor calculation
