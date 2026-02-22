@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2024-02-22
+### Fixed
+- **Jump Animation**: Completely rewrote jumping system for smooth, beautiful motion
+- **Teleportation Bug**: Unicorn no longer instantly teleports above platform
+- **Platform Sag Timing**: Sagging now only occurs when unicorn lands, not immediately
+- **Animation Quality**: Jump now has proper physics with acceleration/deceleration
+
+### Animation Improvements
+- **Proper Arc Trajectory**: Uses cubic easing for realistic acceleration upward and deceleration downward
+- **Smooth X-Axis Movement**: Unicorn moves horizontally while jumping, not just vertically
+- **Correct Starting Point**: Animation begins from current platform position
+- **Perfect Landing Timing**: Platform sagging triggers exactly when jump completes
+- **Visual Polish**: Professional-quality motion that feels satisfying
+
+### Technical Fixes
+- **Jump Physics**: Replaced linear motion with cubic ease-in/out for natural movement
+- **Position Tracking**: Added `jumpStartX` to track horizontal starting position
+- **Timing System**: Platform sagging now triggered by jump completion event
+- **Animation Flow**: Sequential animation pipeline (jump → land → sag → bounce back)
+
+### Files Modified
+- `game.js`: Fixed animation sequencing and sagging timing
+- `entities.js`: Rewrote jump animation with proper physics and motion
+
+### Before vs After
+**Before**: Instant teleport + awkward up/down motion + premature sagging
+**After**: Smooth arc from start platform → peak → target platform + perfect landing sag
+
 ## [0.3.0] - 2024-02-22
 ### Added
 - **Arc-Based Jumping Animation**: Beautiful parabolic jump trajectory with smooth upward/downward motion

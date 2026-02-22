@@ -47,11 +47,15 @@ node -c game.js
 ```
 
 # Testing instructions
-1. Open index.html in multiple browsers (Chrome, Firefox)
-2. Test core mechanics: letter jumping, platform movement
-3. Verify visual feedback for jumpable platforms
-4. Check responsive design on different screen sizes
-5. Test game state persistence (lives, score)
+**No programmatic testing is necessary** - The game is simple enough to be tested manually by opening index.html in a browser and playing through the core mechanics.
+
+Manual testing approach:
+1. Open index.html in multiple browsers (Chrome, Firefox, Safari)
+2. Test all jump directions (up, down, left, right, diagonals)
+3. Verify visual feedback (platform highlighting, unicorn animation)
+4. Check landing mechanics (sagging effect, precise positioning)
+5. Test game state (score updates, lives, level progression)
+6. Validate responsive design on different screen sizes
 
 # Documentation
 - [Project spec](project_spec.md) - Full requirements and milestones

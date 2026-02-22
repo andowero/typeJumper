@@ -14,8 +14,8 @@ class Game {
         this.paused = false;
         
         // Animation parameters
-        this.jumpDuration = 200; // ms - tunable jump animation duration
-        this.jumpHeight = 80; // pixels - maximum jump height
+        this.jumpDuration = 100; // ms - faster jump animation (was 200)
+        this.jumpHeight = 60; // pixels - slightly lower jump height for faster speed
         this.platformSagAmount = 5; // pixels - how much platform sags on landing
         this.platformSagDuration = 150; // ms - sag animation duration
         
@@ -304,13 +304,22 @@ class Game {
             this.targetPlatformForSag = null; // Clear the reference
         }
         
+        // Make unicorn sag with the platform
+        if (this.unicorn && this.saggingPlatform && !this.unicorn.isJumping) {
+            const currentPlatform = this.platforms.find(platform => platform.isOccupied);
+            if (currentPlatform === this.saggingPlatform) {
+                // Unicorn is on the sagging platform - make it move with the platform
+                this.unicorn.y = currentPlatform.y - this.unicorn.size + this.saggingPlatform.sagAmount;
+            }
+        }
+        
         // Reset jumpable status for all platforms
         this.platforms.forEach(platform => {
             platform.isJumpable = false;
         });
         
         // Mark neighbor platforms as jumpable
-        if (this.unicorn && !this.unicorn.isJumping) {
+        if (this.unicorn && !this.unicorn.isJumping && !this.saggingPlatform) {
             const currentPlatform = this.platforms.find(platform => platform.isOccupied);
             if (currentPlatform) {
                 const neighbors = this.findNeighborPlatforms(currentPlatform);
@@ -322,8 +331,8 @@ class Game {
             }
         }
         
-        // Update unicorn position
-        if (this.unicorn) {
+        // Update unicorn position (only if not sagging with platform)
+        if (this.unicorn && (this.unicorn.isJumping || !this.saggingPlatform)) {
             this.unicorn.update();
         }
         

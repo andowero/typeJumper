@@ -109,32 +109,47 @@ class Unicorn {
             this.jumpProgress++;
             const progress = this.jumpProgress / this.jumpDuration;
             
-            // Calculate proper jump animation with smooth arc
             // X position: move smoothly from start to target
             const startX = this.jumpStartX || this.x;
             const targetX = this.targetPlatform.x + (this.targetPlatform.size - this.size) / 2;
             this.x = startX + (targetX - startX) * progress;
             
-            // Y position: create beautiful parabolic arc using sine wave for smoothness
-            // Start at jumpStartY, peak in middle, end at target Y
-            const jumpPeak = this.jumpStartY - this.jumpHeight;
+            // Y position: create beautiful parabolic arc
+            const targetY = this.targetPlatform.y - this.size;
+            const verticalDistance = this.jumpStartY - targetY;
+            
+            // Dynamic jump height: higher arc for upward jumps, lower for downward jumps
+            // This creates more natural-looking jumps
+            let effectiveJumpHeight = this.jumpHeight;
+            if (verticalDistance > 0) {
+                // Upward jump: increase arc height for better visual appeal
+                effectiveJumpHeight = this.jumpHeight * 2.5;
+            } else if (verticalDistance < 0) {
+                // Downward jump: reduce arc height slightly
+                effectiveJumpHeight = this.jumpHeight * 0.5;
+            }
+            
+            const jumpPeak = this.jumpStartY - effectiveJumpHeight;
+            
             if (progress < 0.5) {
                 // First half: accelerating upward (ease-out)
                 const upwardProgress = progress * 2;
-                const easeOut = 1 - Math.pow(1 - upwardProgress, 3); // cubic ease-out
-                this.y = this.jumpStartY - (this.jumpHeight * easeOut);
+                const easeOut = 1 - Math.pow(1 - upwardProgress, 3);
+                this.y = this.jumpStartY - (effectiveJumpHeight * easeOut);
             } else {
                 // Second half: decelerating downward (ease-in)
                 const downwardProgress = (progress - 0.5) * 2;
-                const easeIn = Math.pow(downwardProgress, 3); // cubic ease-in
-                this.y = jumpPeak + (this.jumpHeight * easeIn);
+                const easeIn = Math.pow(downwardProgress, 3);
+                
+                // Descent goes FROM peak TO targetY
+                const descentDistance = targetY - jumpPeak;
+                this.y = jumpPeak + (descentDistance * easeIn);
             }
             
             if (this.jumpProgress >= this.jumpDuration) {
                 this.isJumping = false;
                 this.jumpProgress = 0;
-                this.y = this.targetPlatform.y - this.size;
-                // Reset start position for next jump
+                this.y = targetY;
                 this.jumpStartX = null;
             }
         }
