@@ -109,13 +109,18 @@ class Game {
 
     findNeighborPlatforms(currentPlatform) {
         const neighbors = [];
+        
+        // In checkerboard pattern, neighbors are at different offsets depending on position
+        // For platforms at (row,col) where (row+col) is even:
+        // - Diagonals: ±1 in both directions (maintains even sum)
+        // - Horizontals: ±2 in x direction, 0 in y (maintains even sum)
         const neighborOffsets = [
-            {dx: -2, dy: -2}, // upper left (skip empty space)
-            {dx: 2, dy: -2},  // upper right (skip empty space)
-            {dx: -2, dy: 0},  // left (skip empty space)
-            {dx: 2, dy: 0},   // right (skip empty space)
-            {dx: -2, dy: 2},  // lower left (skip empty space)
-            {dx: 2, dy: 2}    // lower right (skip empty space)
+            {dx: -1, dy: -1}, // upper left
+            {dx: 1, dy: -1},  // upper right
+            {dx: -2, dy: 0},  // left
+            {dx: 2, dy: 0},   // right
+            {dx: -1, dy: 1},  // lower left
+            {dx: 1, dy: 1}    // lower right
         ];
         
         const platformGrid = this.createPlatformGrid();
@@ -124,7 +129,7 @@ class Game {
         for (let row = 0; row < platformGrid.length; row++) {
             for (let col = 0; col < platformGrid[row].length; col++) {
                 if (platformGrid[row][col] === currentPlatform) {
-                    // Check all neighbor positions (accounting for checkerboard pattern)
+                    // Check all neighbor positions
                     neighborOffsets.forEach(offset => {
                         const neighborRow = row + offset.dy;
                         const neighborCol = col + offset.dx;

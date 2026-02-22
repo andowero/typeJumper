@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-02-22
+### Fixed
+- **Neighbor Detection**: Fixed checkerboard pattern neighbor calculation
+- **Left/Right Jumping**: Unicorn can now jump to left and right neighbors (previously only diagonals worked)
+- **All 6 Directions**: Upper left/right, left/right, and lower left/right all functional
+
+### Technical Fix
+- **Checkerboard Offset Correction**: Changed neighbor offsets from ±1 to ±2 to skip empty spaces
+- **Grid Navigation**: Properly accounts for missing platforms in checkerboard pattern
+- **Neighbor Test Update**: Test suite now reflects correct checkerboard neighbor distances
+
+### Changed
+- `findNeighborPlatforms()`: Uses {dx: ±2, dy: ±2} offsets instead of {dx: ±1, dy: ±1}
+- Neighbor detection now correctly finds platforms through empty checkerboard spaces
+
 ## [0.2.0] - 2024-02-22
 ### Added
 - **Neighbor-Based Jumping**: Unicorn can only jump to adjacent platforms (6 directions)
