@@ -234,14 +234,14 @@
             const currentRow = parseInt(currentPlatform.dataset.row);
             const currentCol = parseInt(currentPlatform.dataset.col);
             
-            // Define neighbor offsets (6 directions)
+            // Define neighbor offsets (6 directions) - accounting for checkerboard pattern
             const neighborOffsets = [
-                {dr: -1, dc: -1}, // upper left
-                {dr: -1, dc: 1},  // upper right
-                {dr: 0, dc: -1},  // left
-                {dr: 0, dc: 1},   // right
-                {dr: 1, dc: -1},  // lower left
-                {dr: 1, dc: 1}    // lower right
+                {dr: -2, dc: -2}, // upper left (skip empty space)
+                {dr: -2, dc: 2},  // upper right (skip empty space)
+                {dr: 0, dc: -2},  // left (skip empty space)
+                {dr: 0, dc: 2},   // right (skip empty space)
+                {dr: 2, dc: -2},  // lower left (skip empty space)
+                {dr: 2, dc: 2}    // lower right (skip empty space)
             ];
             
             // Find and highlight neighbors
@@ -274,8 +274,8 @@
             
             // Find neighbors
             const neighborOffsets = [
-                {dr: -1, dc: -1}, {dr: -1, dc: 1}, {dr: 0, dc: -1}, 
-                {dr: 0, dc: 1}, {dr: 1, dc: -1}, {dr: 1, dc: 1}
+                {dr: -2, dc: -2}, {dr: -2, dc: 2}, {dr: 0, dc: -2}, 
+                {dr: 0, dc: 2}, {dr: 2, dc: -2}, {dr: 2, dc: 2}
             ];
             
             const neighbors = [];
