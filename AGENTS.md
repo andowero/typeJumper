@@ -32,10 +32,6 @@ TypeJumper is a browser-based platformer game where players control a unicorn av
 
 # Often used commands
 ```bash
-# Run game in a browser
-firefox index.html
-chromium index.html
-
 # Run basic HTML validation
 tidy -q -e index.html
 
@@ -48,6 +44,8 @@ node -c game.js
 
 # Testing instructions
 **No programmatic testing is necessary** - The game is simple enough to be tested manually by opening index.html in a browser and playing through the core mechanics.
+
+**NEVER** kill running firefox instances. **DON'T** open new firefox windows, the user will do that himself.
 
 Manual testing approach:
 1. Open index.html in multiple browsers (Chrome, Firefox, Safari)
