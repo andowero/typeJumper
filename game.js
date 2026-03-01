@@ -14,7 +14,7 @@ class Game {
         this.paused = false;
         
         // Animation parameters
-        this.jumpDuration = 100; // ms - faster jump animation (was 200)
+        this.jumpDuration = 40; // ms - faster jump animation (was 200)
         this.jumpHeight = 60; // pixels - slightly lower jump height for faster speed
         this.platformSagAmount = 5; // pixels - how much platform sags on landing
         this.platformSagDuration = 150; // ms - sag animation duration
@@ -24,6 +24,13 @@ class Game {
         this.unicorn = null;
         this.platformSize = 90; // 50% bigger (60 * 1.5)
         this.platformSpacing = 24; // 20% farther apart (20 * 1.2)
+        
+        // Scrolling
+        this.scrollSpeed = 30; // pixels per second
+        this.nextRowY = 0;     // y position where the next new row will be spawned (above canvas)
+        this.nextRowParity = 0; // 0 or 1 — tracks checkerboard row parity for new rows
+        this.allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        this.letterPool = [];   // shuffled pool for new platform letters
         
         // Animation state
         this.jumpStartTime = 0;
@@ -42,6 +49,7 @@ class Game {
     init() {
         // Clear any existing platforms
         this.platforms = [];
+        this.letterPool = [];
         
         // Create checkerboard pattern of platforms
         this.createCheckerboardPlatforms();
@@ -53,130 +61,69 @@ class Game {
         this.updateUI();
     }
 
-    createCheckerboardPlatforms() {
-        const cols = Math.floor(this.canvas.width / (this.platformSize + this.platformSpacing));
-        const rows = Math.floor(this.canvas.height / (this.platformSize + this.platformSpacing));
-        
-        // Generate all letters A-Z
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-        
-        // Shuffle letters to ensure random distribution
-        for (let i = letters.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [letters[i], letters[j]] = [letters[j], letters[i]];
+    // Draw a letter from the shuffled pool (refills when empty)
+    drawLetter() {
+        if (this.letterPool.length === 0) {
+            this.letterPool = [...this.allLetters];
+            for (let i = this.letterPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.letterPool[i], this.letterPool[j]] = [this.letterPool[j], this.letterPool[i]];
+            }
         }
+        return this.letterPool.pop();
+    }
+
+    createCheckerboardPlatforms() {
+        const step = this.platformSize + this.platformSpacing;
+        const cols = Math.floor(this.canvas.width / step);
+        const rows = Math.floor(this.canvas.height / step);
         
-        let letterIndex = 0;
-        
-        // Create checkerboard pattern
+        // Create checkerboard pattern filling the canvas
         for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
-                // Only create platforms in checkerboard pattern
                 if ((row + col) % 2 === 0) {
-                    const x = col * (this.platformSize + this.platformSpacing);
-                    const y = row * (this.platformSize + this.platformSpacing);
-                    
-                    // Use letter from shuffled array, wrapping around if needed
-                    const letter = letters[letterIndex % letters.length];
-                    letterIndex++;
-                    
-                    const platform = new Platform(x, y, this.platformSize, letter);
+                    const x = col * step;
+                    const y = row * step;
+                    const platform = new Platform(x, y, this.platformSize, this.drawLetter());
                     this.platforms.push(platform);
                 }
             }
         }
         
-        // Ensure each letter is unique by checking for duplicates
-        this.ensureUniqueLetters();
-    }
-
-    ensureUniqueLetters() {
-        const letterCount = {};
-        const duplicates = [];
-        
-        // Count letter occurrences
-        this.platforms.forEach(platform => {
-            letterCount[platform.letter] = (letterCount[platform.letter] || 0) + 1;
-            if (letterCount[platform.letter] > 1) {
-                duplicates.push(platform);
-            }
-        });
-        
-        // If there are duplicates, fix them
-        if (duplicates.length > 0) {
-            const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-            const usedLetters = new Set(this.platforms.map(p => p.letter));
-            const availableLetters = allLetters.filter(letter => !usedLetters.has(letter));
-            
-            // Fix duplicates by assigning available letters
-            duplicates.forEach(platform => {
-                if (availableLetters.length > 0) {
-                    const newLetter = availableLetters.pop();
-                    platform.letter = newLetter;
-                    usedLetters.add(newLetter);
-                }
-            });
-        }
+        // After initial grid: the topmost row is row 0 (y=0).
+        // New rows will be spawned above, starting one step above row 0.
+        const step_ = this.platformSize + this.platformSpacing;
+        // nextRowY is the y of the next row to spawn (above canvas = negative)
+        this.nextRowY = -step_;
+        // The row just above row 0 has parity: ((-1) + col) % 2 — row index -1 has parity 1
+        // So nextRowParity = 1 (opposite of row 0 which is parity 0)
+        this.nextRowParity = 1;
     }
 
     findNeighborPlatforms(currentPlatform) {
-        const neighbors = [];
+        // In the checkerboard, neighbors are exactly one step diagonally or two steps horizontally.
+        // step = platformSize + platformSpacing
+        const step = this.platformSize + this.platformSpacing;
         
-        // In checkerboard pattern, neighbors are at different offsets depending on position
-        // For platforms at (row,col) where (row+col) is even:
-        // - Diagonals: ±1 in both directions (maintains even sum)
-        // - Horizontals: ±2 in x direction, 0 in y (maintains even sum)
+        // Pixel offsets for the 6 neighbor positions
         const neighborOffsets = [
-            {dx: -1, dy: -1}, // upper left
-            {dx: 1, dy: -1},  // upper right
-            {dx: -2, dy: 0},  // left
-            {dx: 2, dy: 0},   // right
-            {dx: -1, dy: 1},  // lower left
-            {dx: 1, dy: 1}    // lower right
+            {dx: -step, dy: -step}, // upper left (diagonal)
+            {dx:  step, dy: -step}, // upper right (diagonal)
+            {dx: -2*step, dy: 0},   // left (horizontal skip)
+            {dx:  2*step, dy: 0},   // right (horizontal skip)
+            {dx: -step, dy:  step}, // lower left (diagonal)
+            {dx:  step, dy:  step}  // lower right (diagonal)
         ];
         
-        const platformGrid = this.createPlatformGrid();
+        const tolerance = step * 0.3; // allow for floating-point drift during scroll
         
-        // Find current platform position in grid
-        for (let row = 0; row < platformGrid.length; row++) {
-            for (let col = 0; col < platformGrid[row].length; col++) {
-                if (platformGrid[row][col] === currentPlatform) {
-                    // Check all neighbor positions
-                    neighborOffsets.forEach(offset => {
-                        const neighborRow = row + offset.dy;
-                        const neighborCol = col + offset.dx;
-                        
-                        if (neighborRow >= 0 && neighborRow < platformGrid.length &&
-                            neighborCol >= 0 && neighborCol < platformGrid[neighborRow].length) {
-                            const neighbor = platformGrid[neighborRow][neighborCol];
-                            if (neighbor) {
-                                neighbors.push(neighbor);
-                            }
-                        }
-                    });
-                    return neighbors;
-                }
-            }
-        }
-        
-        return neighbors;
-    }
-
-    createPlatformGrid() {
-        const cols = Math.floor(this.canvas.width / (this.platformSize + this.platformSpacing));
-        const rows = Math.floor(this.canvas.height / (this.platformSize + this.platformSpacing));
-        
-        const grid = Array(rows).fill().map(() => Array(cols).fill(null));
-        
-        this.platforms.forEach(platform => {
-            const col = Math.round(platform.x / (this.platformSize + this.platformSpacing));
-            const row = Math.round(platform.y / (this.platformSize + this.platformSpacing));
-            if (row >= 0 && row < rows && col >= 0 && col < cols) {
-                grid[row][col] = platform;
-            }
+        return this.platforms.filter(p => {
+            if (p === currentPlatform) return false;
+            return neighborOffsets.some(offset => {
+                return Math.abs(p.x - (currentPlatform.x + offset.dx)) < tolerance &&
+                       Math.abs(p.y - (currentPlatform.y + offset.dy)) < tolerance;
+            });
         });
-        
-        return grid;
     }
 
     updatePlatformSagging() {
@@ -289,26 +236,93 @@ class Game {
         }
     }
 
-    update() {
+    spawnNewRow() {
+        const step = this.platformSize + this.platformSpacing;
+        const cols = Math.floor(this.canvas.width / step);
+        // nextRowParity tells us which col parity gets a platform in this row
+        for (let col = 0; col < cols; col++) {
+            if ((col % 2) === this.nextRowParity) {
+                const x = col * step;
+                const platform = new Platform(x, this.nextRowY, this.platformSize, this.drawLetter());
+                this.platforms.push(platform);
+            }
+        }
+        // Advance for next row
+        this.nextRowY -= step;
+        this.nextRowParity = 1 - this.nextRowParity;
+    }
+
+    update(deltaTime) {
         if (this.paused || this.gameOver) return;
         
-        // Update platform sagging animation
+        const dt = Math.min(deltaTime, 100); // cap to avoid huge jumps after tab switch
+        const dy = (this.scrollSpeed * dt) / 1000; // pixels to move this frame
+        
+        // --- Scroll all platforms down ---
+        this.platforms.forEach(p => { p.y += dy; });
+        
+        // --- Scroll the spawn cursor with the platforms ---
+        this.nextRowY += dy;
+        
+        // --- Unicorn floats with current platform when standing ---
+        if (this.unicorn && !this.unicorn.isJumping) {
+            this.unicorn.y += dy;
+        }
+        
+        // --- Spawn new rows when the spawn cursor has scrolled close enough to the top ---
+        // nextRowY is where the NEXT row will be placed. When it scrolls to within
+        // one step of y=0, spawn it and push the cursor one step further up.
+        const step = this.platformSize + this.platformSpacing;
+        while (this.nextRowY + step >= 0) {
+            this.spawnNewRow();
+        }
+        
+        // --- Remove platforms that have scrolled below the canvas ---
+        const removedPlatforms = this.platforms.filter(p => p.y > this.canvas.height);
+        this.platforms = this.platforms.filter(p => p.y <= this.canvas.height);
+        
+        // --- Handle occupied platform disappearing ---
+        const occupiedWasRemoved = removedPlatforms.some(p => p.isOccupied);
+        if (occupiedWasRemoved && this.unicorn) {
+            this.lives--;
+            this.updateUI();
+            
+            if (this.lives <= 0) {
+                this.gameOver = true;
+                return;
+            }
+            
+            // Teleport unicorn to the platform with the lowest y (highest on screen = closest to top)
+            // among visible platforms — i.e., one "row above" where the unicorn was
+            const visiblePlatforms = this.platforms.filter(p => p.y >= 0 && p.y < this.canvas.height);
+            if (visiblePlatforms.length > 0) {
+                // Find the platform with the smallest y (topmost visible)
+                const topPlatform = visiblePlatforms.reduce((best, p) => p.y < best.y ? p : best);
+                this.platforms.forEach(p => { p.isOccupied = false; });
+                topPlatform.isOccupied = true;
+                this.unicorn.x = topPlatform.x + (topPlatform.size - this.unicorn.size) / 2;
+                this.unicorn.y = topPlatform.y - this.unicorn.size;
+                this.unicorn.isJumping = false;
+                this.saggingPlatform = null;
+                this.targetPlatformForSag = null;
+            }
+        }
+        
+        // --- Update platform sagging animation ---
         this.updatePlatformSagging();
         
         // Check if jump just completed to trigger sagging
         if (this.unicorn && !this.unicorn.isJumping && this.targetPlatformForSag && !this.saggingPlatform) {
-            // Jump just completed - start sagging animation
             this.saggingPlatform = this.targetPlatformForSag;
             this.sagStartTime = performance.now();
-            this.sagDirection = 1; // Start by sagging down
-            this.targetPlatformForSag = null; // Clear the reference
+            this.sagDirection = 1;
+            this.targetPlatformForSag = null;
         }
         
         // Make unicorn sag with the platform
         if (this.unicorn && this.saggingPlatform && !this.unicorn.isJumping) {
             const currentPlatform = this.platforms.find(platform => platform.isOccupied);
             if (currentPlatform === this.saggingPlatform) {
-                // Unicorn is on the sagging platform - make it move with the platform
                 this.unicorn.y = currentPlatform.y - this.unicorn.size + this.saggingPlatform.sagAmount;
             }
         }
@@ -331,8 +345,8 @@ class Game {
             }
         }
         
-        // Update unicorn position (only if not sagging with platform)
-        if (this.unicorn && (this.unicorn.isJumping || !this.saggingPlatform)) {
+        // Update unicorn jump animation
+        if (this.unicorn && this.unicorn.isJumping) {
             this.unicorn.update();
         }
         
@@ -377,7 +391,7 @@ class Game {
         this.lastTime = timestamp;
         
         // Update game state
-        this.update();
+        this.update(deltaTime);
         
         // Render game
         this.render();
