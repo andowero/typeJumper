@@ -11,6 +11,10 @@ class Platform {
         this.isJumpable = false; // For neighbor highlighting
         this.sagAmount = 0; // Current sag amount (0 = no sag)
         this.isSagging = false; // Whether platform is currently sagging
+        this.isDisappearing = false; // Whether platform is disappearing
+        this.isDisappeared = false; // Whether platform has completely disappeared
+        this.disappearProgress = 0; // Progress of disappear animation (0 to 1)
+        this.disappearStartTime = 0; // When disappear animation started
     }
 
     getRandomColor() {
@@ -25,6 +29,12 @@ class Platform {
     draw(ctx) {
         // Apply sagging effect to Y position
         const drawY = this.y + this.sagAmount;
+        
+        // Apply disappearing animation
+        if (this.isDisappearing) {
+            const alpha = 1 - this.disappearProgress;
+            ctx.globalAlpha = alpha;
+        }
         
         // Draw platform with darker color if jumpable
         ctx.fillStyle = this.isJumpable ? this.getDarkerColor() : this.color;
@@ -41,6 +51,11 @@ class Platform {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(this.letter, this.x + this.size/2, drawY + this.size/2);
+        
+        // Reset alpha if we changed it
+        if (this.isDisappearing) {
+            ctx.globalAlpha = 1;
+        }
     }
 
     getDarkerColor() {

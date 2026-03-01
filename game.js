@@ -228,6 +228,12 @@ class Game {
                     // Store target platform for sagging when jump completes
                     this.targetPlatformForSag = targetPlatform;
                     
+                    // Make the platform we jumped from disappear
+                    if (currentPlatform) {
+                        currentPlatform.isDisappearing = true;
+                        currentPlatform.disappearStartTime = performance.now();
+                    }
+                    
                     // Increase score
                     this.score += 10;
                     this.updateUI();
@@ -257,6 +263,22 @@ class Game {
         
         const dt = Math.min(deltaTime, 100); // cap to avoid huge jumps after tab switch
         const dy = (this.scrollSpeed * dt) / 1000; // pixels to move this frame
+        
+        // --- Update disappearing platforms ---
+        const disappearDuration = 500; // ms for disappear animation
+        this.platforms.forEach(platform => {
+            if (platform.isDisappearing) {
+                const elapsed = performance.now() - platform.disappearStartTime;
+                if (elapsed >= disappearDuration) {
+                    platform.isDisappeared = true;
+                } else {
+                    platform.disappearProgress = elapsed / disappearDuration;
+                }
+            }
+        });
+        
+        // --- Remove disappeared platforms ---
+        this.platforms = this.platforms.filter(p => !p.isDisappeared);
         
         // --- Scroll all platforms down ---
         this.platforms.forEach(p => { p.y += dy; });
@@ -338,7 +360,7 @@ class Game {
             if (currentPlatform) {
                 const neighbors = this.findNeighborPlatforms(currentPlatform);
                 neighbors.forEach(neighbor => {
-                    if (!neighbor.isOccupied) {
+                    if (!neighbor.isOccupied && !neighbor.isDisappearing && !neighbor.isDisappeared) {
                         neighbor.isJumpable = true;
                     }
                 });
