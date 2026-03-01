@@ -9,10 +9,15 @@
 - **No sound/background**: ✅ As specified for MVP
 
 ### 🚧 v1 - IN PROGRESS (Next Milestone)
-- Moving platforms
-- Difficulty settings
-- Visual feedback for jumpable platforms
-- Points system (basic scoring implemented in MVP)
+- ✅ Moving platforms with infinite scrolling
+- ✅ Difficulty settings (progressive speed)
+- ✅ Visual feedback for jumpable platforms (darker colors, gold borders)
+- ✅ Points system (basic scoring implemented)
+- ✅ Disappearing platforms feature
+- Platform removal when scrolled off screen
+- Enhanced scoring system with bonuses
+- Game over conditions with lives system
+- Level progression with increasing difficulty
 
 ### 📋 Future Milestones
 - **v2**: Sound effects
@@ -32,6 +37,13 @@
 - ✅ Score system: +10 points per successful jump
 - ✅ UI displays: Score, Lives, Level
 - ✅ Input handling: Keyboard letter detection (A-Z only)
+- ✅ Moving platforms with infinite scrolling system
+- ✅ Neighbor-based jumping (6 directions: diagonals and horizontals)
+- ✅ Visual feedback for jumpable platforms (highlighting)
+- ✅ Beautiful arc-based jumping animation with physics
+- ✅ Platform sagging effect on landing
+- ✅ Disappearing platforms after jumping from them
+- ✅ Smooth fade-out animation for disappearing platforms
 
 ### Technical Implementation
 - ✅ Pure HTML5 Canvas rendering (no external dependencies)

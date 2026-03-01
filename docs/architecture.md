@@ -10,6 +10,11 @@ TypeJumper is a browser-based platformer game built with pure HTML5 Canvas and J
 Request Animation Frame → Update Game State → Render Frame → Repeat
 ```
 
+### Platform Lifecycle
+```
+Normal → Jumpable (highlighted) → Occupied → Disappearing (fade-out) → Removed
+```
+
 ### Main Components
 
 1. **Game Engine**
@@ -29,7 +34,7 @@ Request Animation Frame → Update Game State → Render Frame → Repeat
    - Active power-ups and timers
 
 4. **Entity System**
-   - **Platforms**: Letter-labeled surfaces with positions and states
+   - **Platforms**: Letter-labeled surfaces with positions, states, and lifecycle (normal/jumpable/occupied/disappearing)
    - **Avatar**: Unicorn character with position and state
    - **Bonuses**: Collectible items (sweets, presents, coins)
    - **Enemies**: Hazardous entities (witch, rat, ghost, skeleton)
@@ -46,6 +51,7 @@ Request Animation Frame → Update Game State → Render Frame → Repeat
    - Avatar is either on a platform or in transition
    - Platforms move downward at constant speed
    - No gravity or momentum calculations
+   - Platform disappearing: 500ms fade-out animation using alpha transparency
 
 7. **Rendering**
    - Canvas-based drawing

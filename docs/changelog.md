@@ -2,6 +2,31 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-02-25
+### Added
+- **Disappearing Platforms**: Platforms now disappear after unicorn jumps from them
+- **Fade-Out Animation**: Smooth 500ms fade-out effect for disappearing platforms
+- **Dynamic Platform Removal**: Disappeared platforms are completely removed from game
+- **Jumpable Filtering**: Disappearing/disappeared platforms excluded from jumpable neighbors
+
+### Technical Implementation
+- **Platform State Management**: Added `isDisappearing`, `isDisappeared`, `disappearProgress`, and `disappearStartTime` properties
+- **Animation System**: Uses `globalAlpha` for smooth fade-out effect
+- **Cleanup Logic**: Automatic removal of fully disappeared platforms
+- **Game Loop Integration**: Disappearing animation updates alongside scrolling and sagging
+
+### Files Modified
+- `game.js`: Added disappearing platform logic in `handleInput()` and `update()` methods
+- `entities.js`: Enhanced Platform class with disappearing state and fade-out drawing
+
+### Gameplay Impact
+- **Strategic Element**: Players must plan jumps carefully as platforms disappear
+- **Visual Feedback**: Clear indication of which platforms are disappearing
+- **Performance**: Efficient cleanup prevents memory buildup from removed platforms
+- **Compatibility**: Works seamlessly with existing scrolling, sagging, and jumping mechanics
+
+## [0.3.1] - 2024-02-22
+
 ## [0.3.1] - 2024-02-22
 ### Fixed
 - **Jump Animation**: Completely rewrote jumping system for smooth, beautiful motion
